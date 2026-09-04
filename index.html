@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conectar WhatsApp - SICSSA LAB</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f0f2f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+  }
+  .card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    padding: 40px;
+    max-width: 480px;
+    width: 100%;
+    text-align: center;
+  }
+  h1 { font-size: 22px; color: #111; margin-bottom: 8px; }
+  p { color: #555; font-size: 15px; line-height: 1.5; }
+  #wa-embedded-signup-btn {
+    background: #1877f2;
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 20px;
+    width: 100%;
+  }
+  #wa-embedded-signup-btn:hover { background: #166fe5; }
+  #wa-embedded-signup-btn:disabled { background: #ccc; cursor: default; }
+  #status {
+    margin-top: 24px;
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    text-align: left;
+    white-space: pre-wrap;
+    word-break: break-word;
+    display: none;
+  }
+  #status.show { display: block; }
+  #status.ok { background: #e7f7ee; border: 1px solid #34a853; color: #1e7e3a; }
+  #status.err { background: #fdeceb; border: 1px solid #ea4335; color: #b3281c; }
+  #status.info { background: #eaf1fd; border: 1px solid #1877f2; color: #1155bb; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Conectar WhatsApp Business a SICSSA LAB Automation</h1>
+    <p>Este botón conecta el número de WhatsApp de SICSSA LAB (cuenta existente) con la app de automatización. Selecciona tu negocio y la cuenta/número que YA tienes verificado — no se crea nada nuevo.</p>
+    <button id="wa-embedded-signup-btn" disabled>Cargando...</button>
+    <div id="status"></div>
+  </div>
+
+<script>
+  const statusEl = document.getElementById('status');
+  const btn = document.getElementById('wa-embedded-signup-btn');
+
+  function showStatus(msg, kind) {
+    statusEl.textContent = msg;
+    statusEl.className = 'show ' + kind;
+  }
+
+  window.addEventListener('message', (event) => {
+    if (!event.origin || !event.origin.endsWith('facebook.com')) return;
+    try {
+      const data = JSON.parse(event.data);
+      if (data.type === 'WA_EMBEDDED_SIGNUP') {
+        console.log('WA_EMBEDDED_SIGNUP event:', data);
+        if (data.event === 'FINISH') {
+          showStatus('✅ ¡Listo! Cuenta conectada.\nWABA ID: ' + (data.data && data.data.waba_id) + '\nPhone Number ID: ' + (data.data && data.data.phone_number_id), 'ok');
+        } else if (data.event === 'CANCEL') {
+          showStatus('⚠️ Cancelaste el proceso en el paso: ' + (data.data && data.data.current_step), 'info');
+        } else if (data.event === 'ERROR') {
+          showStatus('❌ Error: ' + (data.data && data.data.error_message), 'err');
+        }
+      }
+    } catch (e) {
+      // ignore non-JSON messages
+    }
+  });
+
+  window.fbAsyncInit = function() {
+    FB.init({
+      appId: '2225525364680650',
+      autoLogAppEvents: true,
+      xfbml: true,
+      version: 'v21.0'
+    });
+    btn.disabled = false;
+    btn.textContent = 'Conectar mi WhatsApp Business';
+  };
+
+  (function(d, s, id){
+     var js, fjs = d.getElementsByTagName(s)[0];
+     if (d.getElementById(id)) {return;}
+     js = d.createElement(s); js.id = id;
+     js.src = "https://connect.facebook.net/es_LA/sdk.js";
+     fjs.parentNode.insertBefore(js, fjs);
+   }(document, 'script', 'facebook-jssdk'));
+
+  btn.addEventListener('click', function() {
+    showStatus('Abriendo ventana de Facebook... si no aparece, revisa si tu navegador bloqueó una ventana emergente (pop-up) para este sitio.', 'info');
+    FB.login(function(response) {
+      console.log('FB.login response:', response);
+      if (response.authResponse) {
+        showStatus('Autorización recibida. Cerrando...\n(revisa el mensaje de arriba con los IDs)', 'ok');
+      } else if (response.status === 'unknown') {
+        showStatus('No se pudo determinar el estado de inicio de sesión. Intenta de nuevo, o revisa que no se haya bloqueado la ventana emergente.', 'err');
+      }
+    }, {
+      config_id: '832491303223633',
+      response_type: 'code',
+      override_default_response_type: true,
+      extras: { setup: {} }
+    });
+  });
+</script>
+</body>
+</html>
