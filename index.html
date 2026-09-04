@@ -39,7 +39,6 @@
     width: 100%;
   }
   #wa-embedded-signup-btn:hover { background: #166fe5; }
-  #wa-embedded-signup-btn:disabled { background: #ccc; cursor: default; }
   #status {
     margin-top: 24px;
     padding: 16px;
@@ -59,8 +58,8 @@
 <body>
   <div class="card">
     <h1>Conectar WhatsApp Business a SICSSA LAB Automation</h1>
-    <p>Este botón conecta el número de WhatsApp de SICSSA LAB (cuenta existente) con la app de automatización. Selecciona tu negocio y la cuenta/número que YA tienes verificado — no se crea nada nuevo.</p>
-    <button id="wa-embedded-signup-btn" disabled>Cargando...</button>
+    <p>Este boton conecta el numero de WhatsApp de SICSSA LAB (cuenta existente) con la app de automatizacion. Selecciona tu negocio y la cuenta/numero que YA tienes verificado, no se crea nada nuevo.</p>
+    <button id="wa-embedded-signup-btn">Conectar mi WhatsApp Business</button>
     <div id="status"></div>
   </div>
 
@@ -80,52 +79,29 @@
       if (data.type === 'WA_EMBEDDED_SIGNUP') {
         console.log('WA_EMBEDDED_SIGNUP event:', data);
         if (data.event === 'FINISH') {
-          showStatus('✅ ¡Listo! Cuenta conectada.\nWABA ID: ' + (data.data && data.data.waba_id) + '\nPhone Number ID: ' + (data.data && data.data.phone_number_id), 'ok');
+          showStatus('Listo. Cuenta conectada.\nWABA ID: ' + (data.data && data.data.waba_id) + '\nPhone Number ID: ' + (data.data && data.data.phone_number_id), 'ok');
         } else if (data.event === 'CANCEL') {
-          showStatus('⚠️ Cancelaste el proceso en el paso: ' + (data.data && data.data.current_step), 'info');
+          showStatus('Cancelaste el proceso en el paso: ' + (data.data && data.data.current_step), 'info');
         } else if (data.event === 'ERROR') {
-          showStatus('❌ Error: ' + (data.data && data.data.error_message), 'err');
+          showStatus('Error: ' + (data.data && data.data.error_message), 'err');
         }
       }
-    } catch (e) {
-      // ignore non-JSON messages
-    }
+    } catch (e) {}
   });
 
-  window.fbAsyncInit = function() {
-    FB.init({
-      appId: '2225525364680650',
-      autoLogAppEvents: true,
-      xfbml: true,
-      version: 'v21.0'
-    });
-    btn.disabled = false;
-    btn.textContent = 'Conectar mi WhatsApp Business';
-  };
-
-  (function(d, s, id){
-     var js, fjs = d.getElementsByTagName(s)[0];
-     if (d.getElementById(id)) {return;}
-     js = d.createElement(s); js.id = id;
-     js.src = "https://connect.facebook.net/es_LA/sdk.js";
-     fjs.parentNode.insertBefore(js, fjs);
-   }(document, 'script', 'facebook-jssdk'));
-
   btn.addEventListener('click', function() {
-    showStatus('Abriendo ventana de Facebook... si no aparece, revisa si tu navegador bloqueó una ventana emergente (pop-up) para este sitio.', 'info');
-    FB.login(function(response) {
-      console.log('FB.login response:', response);
-      if (response.authResponse) {
-        showStatus('Autorización recibida. Cerrando...\n(revisa el mensaje de arriba con los IDs)', 'ok');
-      } else if (response.status === 'unknown') {
-        showStatus('No se pudo determinar el estado de inicio de sesión. Intenta de nuevo, o revisa que no se haya bloqueado la ventana emergente.', 'err');
-      }
-    }, {
-      config_id: '832491303223633',
-      response_type: 'code',
-      override_default_response_type: true,
-      extras: { setup: {} }
-    });
+    showStatus('Abriendo ventana de Facebook... si no aparece, revisa si tu navegador bloqueo una ventana emergente para este sitio.', 'info');
+    const redirectUri = 'https://sicssalab.github.io/wa-connect/';
+    const extras = encodeURIComponent(JSON.stringify({ setup: {} }));
+    const url = 'https://www.facebook.com/v21.0/dialog/oauth'
+      + '?client_id=2225525364680650'
+      + '&redirect_uri=' + encodeURIComponent(redirectUri)
+      + '&config_id=832491303223633'
+      + '&response_type=code'
+      + '&override_default_response_type=true'
+      + '&display=popup'
+      + '&extras=' + extras;
+    window.open(url, 'wa_embedded_signup', 'width=600,height=720,menubar=no,toolbar=no,location=no,status=no');
   });
 </script>
 </body>
